@@ -31,8 +31,13 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h> // for flock()
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <pthread.h> // for mutexen
+
+#include <errno.h>
+#ifndef ENOATTR
+# define ENOATTR ENODATA
+#endif
 
 typedef struct
 {
@@ -464,7 +469,7 @@ static int plus3_write(const char *path, const char *buf, size_t size, off_t off
 			d_list[i].bcount=0;
 			d_encode(dm+i*0x20, d_list[i]);
 		}
-		fprintf(stderr, "b=%u, i=%d, where=%zu, transferred=%zu, len=%zu\n", b, i, (size_t)where, transferred, len);
+		fprintf(stderr, "b=%u, i=%d, where=%zu, transferred=%zu, len=%zu\n", b, i, (size_t)where, (size_t)transferred, (size_t)len);
 		if((i>=0)&&where)
 			memcpy(dm+where+((offset+transferred)%(1<<(7+d_bsh))), buf+transferred, len);
 		transferred+=len;
@@ -1076,7 +1081,7 @@ int main(int argc, char *argv[])
 			for(unsigned int b=0;b<(d_manyblocks?8:16);b++)
 				if(d_list[i].al[b]) d_bitmap[d_list[i].al[b]]=true;
 	}
-	fprintf(stderr, "plus3dosfs: Used %zu of %zu dirents\n", uents, d_ndirent);
+	fprintf(stderr, "plus3dosfs: Used %zu of %zu dirents\n", (size_t)uents, (size_t)d_ndirent);
 	
 	int fargc=argc-1;
 	char **fargv=(char **)malloc(fargc*sizeof(char *));
@@ -1219,7 +1224,7 @@ uint16_t disk_alloc(void)
 			d_bitmap[i]=true;
 			off_t where=((off_t)i)<<(7+d_bsh);
 			memset(dm+where, 0, 1<<(7+d_bsh)); // zero the newly allocated block
-			fprintf(stderr, "disk_alloc: %zu\n", i);
+			fprintf(stderr, "disk_alloc: %zu\n", (size_t)i);
 			return(i);
 		}
 	}
@@ -1237,7 +1242,7 @@ static int32_t extent_alloc(plus3_dirent last, uint16_t extent)
 			d_list[i].rcount=d_list[i].bcount=0;
 			memset(d_list[i].al, 0, 0x10);
 			d_encode(dm+i*0x20, d_list[i]);
-			fprintf(stderr, "extent_alloc: %zu\n", i);
+			fprintf(stderr, "extent_alloc: %zu\n", (size_t)i);
 			return(i);
 		}
 	}

@@ -31,8 +31,13 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h> // for flock()
-#include <attr/xattr.h>
+#include <sys/xattr.h>
 #include <pthread.h> // for mutexen
+
+#include <errno.h>
+#ifndef ENOATTR
+# define ENOATTR ENODATA
+#endif
 
 typedef struct
 {
@@ -201,7 +206,7 @@ static int ide_read(const char *path, char *buf, size_t size, off_t offset, stru
 	uint32_t sch=p_list[p].sh+(p_list[p].sc*d_nh), ech=p_list[p].eh+(p_list[p].ec*d_nh); // start and end combined CH
 	uint16_t bps=(d_8bit||HSD)?256:512;
 	size_t len=(ech+1-sch)*d_st*bps;
-	if(offset>len) return(0);
+	if((uint)offset>(uint)len) return(0);
 	if(size+offset>len) size=len-offset;
 	dread_havelock(buf, size, sch*d_st*bps+offset);
 	pthread_rwlock_unlock(&dmex);
@@ -483,13 +488,13 @@ int main(int argc, char *argv[])
 		switch(p_list[i].pt)
 		{
 			case 0:
-				fprintf(stderr, "idedosfs: partent %04x: unused\n", i);
+				fprintf(stderr, "idedosfs: partent %04x: unused\n", (uint) i);
 			break;
 			case 0xfe:
-				fprintf(stderr, "idedosfs: partent %04x: bad space\n", i);
+				fprintf(stderr, "idedosfs: partent %04x: bad space\n", (uint) i);
 			break;
 			case 0xff:
-				fprintf(stderr, "idedosfs: partent %04x: free space\n", i);
+				fprintf(stderr, "idedosfs: partent %04x: free space\n", (uint) i);
 			break;
 			case 3: // +3DOS
 			{
@@ -507,7 +512,7 @@ int main(int argc, char *argv[])
 			}
 			/* fallthrough */
 			default:
-				fprintf(stderr, "idedosfs: partent %04x: type %02x, name '%.16s'\n", i, p_list[i].pt, p_list[i].pn);
+				fprintf(stderr, "idedosfs: partent %04x: type %02x, name '%.16s'\n", (uint) i, p_list[i].pt, p_list[i].pn);
 		}
 	}
 	pthread_rwlock_unlock(&dmex);

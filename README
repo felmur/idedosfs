@@ -1,3 +1,7 @@
+I modified some files to allow compilation under ArchLinux 2025.
+Thanks to the author for the sources.
+Felice Murolo (felmur)
+==========================
 idedosfs: FUSE filesystem module for IDEDOS hard disk images
 plus3dosfs: FUSE filesystem module for +3DOS partitions within an idedosfs
 
